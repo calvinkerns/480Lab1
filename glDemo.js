@@ -30,7 +30,7 @@ function createShaderObject(gl, shaderSource, shaderType) {
 
 function createShaderProgram(gl, vertexSource, fragmentSource) {
     // Create shader objects for vertex and fragment shader
-    var   vertexShader = createShaderObject(gl,   vertexSource, gl.  VERTEX_SHADER);
+    var vertexShader = createShaderObject(gl,   vertexSource, gl.  VERTEX_SHADER);
     var fragmentShader = createShaderObject(gl, fragmentSource, gl.FRAGMENT_SHADER);
 
     // Create a shader program
@@ -71,31 +71,35 @@ function createIndexBuffer(gl, indexData) {
 /////////////////////////////////
 var VertShaderSource = `
     // TODO 2.2: Declare the uniform variable Matrix as a mat4 here:
-
+    uniform mat4 Matrix;
     attribute vec3 Position;
     // TODO 3.3: Declare the Color attribute.
+    attribute vec3 Color;
 
     // TODO 3.4: Declare a varying called vColor
+    varying vec3 vColor;
 
     void main() {
 
         // TODO 2.3: Change the following line so the gl_Position
         // gets the product of Matrix and the Position attribute
         gl_Position = vec4(Position, 1.0);
+        gl_Position = Matrix * gl_Position;
 
         // TODO 3.5: Store the color attribute's value in the color varying
-
+        vColor = Color;
     }
 `;
 var FragShaderSource = `
     precision highp float; // use highest available precision for floats
 
     // TODO 3.6: Declare the varying for color
+    varying vec3 vColor;
 
     void main() {
 
-        // TODO 1: Set gl_FragColor to black instead of white
-        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        //TODO 1: Set gl_FragColor to black instead of white
+        gl_FragColor = vec4(vColor[0], vColor[1], vColor[2], 1.0);
 
         // TODO 3.7: Set gl_FragColor to the interpolated value passed
         // in from the rasterizer.
@@ -113,6 +117,8 @@ var Triangle = function(gl, vertexPositions, vertexColors, indices, vertexSource
     this.indexIbo = createIndexBuffer(gl, indices);
 
     // TODO 3.1 - create a vertex buffer for the color data contained in vertexColors
+    colorVbo = createVertexBuffer(gl, vertexColors);
+
 
     // Create the shader program that will render the triangle
     this.shaderProgram = createShaderProgram(gl, vertexSource, fragmentSource);
@@ -129,8 +135,8 @@ Triangle.prototype.render = function(gl, matrix) {
     // TODO 2.1 - uncomment these two lines of code to pass the matrix to the
     // shader as a uniform. The matrix is transposed to convert from row-major
     // to column-major.
-    //var Matrix_loc = gl.getUniformLocation(this.shaderProgram, "Matrix");
-    //gl.uniformMatrix4fv(Matrix_loc, false, matrix.transpose().m);
+    var Matrix_loc = gl.getUniformLocation(this.shaderProgram, "Matrix");
+    gl.uniformMatrix4fv(Matrix_loc, false, matrix.transpose().m);
 
     // Bind the vertex and index buffers with our triangle positions
     gl.bindBuffer(gl.ARRAY_BUFFER, this.positionVbo);
@@ -144,6 +150,7 @@ Triangle.prototype.render = function(gl, matrix) {
     }
 
     // TODO 3.2: Bind the color VBO and link it to the Color attribute
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.colorVbo); //maybe
 
     // Draw the triangle!
     gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_SHORT, 0);
@@ -189,7 +196,7 @@ glDemo.prototype.render = function(canvas, gl, w, h)
 
     // TODO 2.4: Adjust the translation component to make the triangle
     // fit back inside the canvas.
-    matrix.m = [1.5, 0.0, 0.0, 0.0,
+    matrix.m = [1.5, 0.0, 0.0, -.24,
                 0.0, 1.5, 0.0, 0.0,
                 0.0, 0.0, 1.5, 0.0,
                 0.0, 0.0, 0.0, 1.0];
